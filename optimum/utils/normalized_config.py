@@ -15,9 +15,11 @@
 """Normalization configuration classes."""
 
 import functools
-from typing import Callable, Dict, Type, Union
+from typing import TYPE_CHECKING, Callable, Dict, Type, Union
 
-from transformers import PretrainedConfig
+
+if TYPE_CHECKING:
+    from transformers import PretrainedConfig
 
 
 class NormalizedConfig:
@@ -29,7 +31,7 @@ class NormalizedConfig:
             The config to normalize.
     """
 
-    def __init__(self, config: Union[PretrainedConfig, Dict], allow_new: bool = False, **kwargs):
+    def __init__(self, config: Union["PretrainedConfig", Dict], allow_new: bool = False, **kwargs):
         self.config = config
         for key, value in kwargs.items():
             if allow_new or hasattr(self, key.upper()):
@@ -40,7 +42,7 @@ class NormalizedConfig:
                 )
 
     @classmethod
-    def with_args(cls, allow_new: bool = False, **kwargs) -> Callable[[PretrainedConfig], "NormalizedConfig"]:
+    def with_args(cls, allow_new: bool = False, **kwargs) -> Callable[["PretrainedConfig"], "NormalizedConfig"]:
         return functools.partial(cls, allow_new=allow_new, **kwargs)
 
     def __getattr__(self, attr_name):
@@ -75,6 +77,11 @@ class NormalizedConfig:
         except AttributeError:
             return False
         return True
+
+
+class NormalizedTimeSeriesForecastingConfig(NormalizedConfig):
+    NUM_INPUT_CHANNELS = "num_input_channels"
+    CONTEXT_LENGTH = "context_length"
 
 
 class NormalizedTextConfig(NormalizedConfig):
@@ -154,34 +161,48 @@ BartLikeNormalizedTextConfig = NormalizedTextConfig.with_args(
     num_attention_heads="encoder_attention_heads",
     hidden_size="d_model",
 )
-
-GPT2LikeNormalizedTextConfig = NormalizedTextConfig.with_args(num_attention_heads="n_head", hidden_size="n_embd")
+GPT2LikeNormalizedTextConfig = NormalizedTextConfig.with_args(
+    num_attention_heads="n_head",
+    hidden_size="n_embd",
+)
 T5LikeNormalizedTextConfig = NormalizedTextConfig.with_args(
     num_attention_heads="num_heads",
     hidden_size="d_model",
 )
 MPTNormalizedTextConfig = NormalizedTextConfig.with_args(
-    num_attention_heads="n_heads", hidden_size="d_model", num_layers="n_layers"
+    num_attention_heads="n_heads",
+    hidden_size="d_model",
+    num_layers="n_layers",
 )
 GPTBigCodeNormalizedTextConfig = NormalizedTextConfig.with_args(
-    num_attention_heads="n_head", hidden_size="n_embd", num_layers="n_layer"
+    num_attention_heads="n_head",
+    hidden_size="n_embd",
+    num_layers="n_layer",
 )
-
 WhisperLikeNormalizedTextConfig = NormalizedTextConfig.with_args(
     hidden_size="d_model",
 )
-
 TrOCRLikeNormalizedTextConfig = NormalizedTextConfig.with_args(
-    num_layers="decoder_layers",
     num_attention_heads="decoder_attention_heads",
+    num_layers="decoder_layers",
     hidden_size="hidden_size",
 )
-
 SpeechToTextLikeNormalizedTextConfig = NormalizedSeq2SeqConfig.with_args(
+    input_features_per_channel="input_feat_per_channel",
     decoder_num_layers="decoder_layers",
     num_layers="decoder_layers",
-    input_features_per_channel="input_feat_per_channel",
     allow_new=True,
+)
+BloomNormalizedTextConfig = NormalizedTextConfig.with_args(
+    num_attention_heads="n_head",
+    num_layers="n_layer",
+)
+DistilBertNormalizedTextConfig = NormalizedTextConfig.with_args(
+    num_attention_heads="n_heads",
+    hidden_size="dim",
+)
+GPTNeoNormalizedTextConfig = NormalizedTextConfig.with_args(
+    num_attention_heads="num_heads",
 )
 
 
@@ -194,9 +215,10 @@ class NormalizedConfigManager:
             and the hidden size model config attribute names as well as the corresponding ONNX Runtime model type.
     """
 
+    # TODO: missing normalized configs (currently not useful)
     """
-    TODO: missing normalized configs (currently not useful)
-        ['beit',
+        ...
+        'beit',
         'clip',
         'convbert',
         'convnext',
@@ -206,6 +228,7 @@ class NormalizedConfigManager:
         'detr',
         'flaubert',
         'groupvit',
+        'hiera',
         'ibert',
         'layoutlm',
         'layoutlmv3',
@@ -216,8 +239,11 @@ class NormalizedConfigManager:
         'owlvit',
         'perceiver',
         'roformer',
+        'segformer',
+        'siglip',
         'squeezebert',
         'table-transformer',
+        ...
     """
 
     # Contribution note: Please add new models in alphabetical order
@@ -225,11 +251,11 @@ class NormalizedConfigManager:
         "albert": NormalizedTextConfig,
         "bart": BartLikeNormalizedTextConfig,
         "bert": NormalizedTextConfig,
-        # "big_bird": NormalizedTextConfig,
-        # "bigbird_pegasus": BartLikeNormalizedTextConfig,
+        "big_bird": NormalizedTextConfig,
+        "bigbird_pegasus": BartLikeNormalizedTextConfig,
         "blenderbot": BartLikeNormalizedTextConfig,
         "blenderbot-small": BartLikeNormalizedTextConfig,
-        "bloom": NormalizedTextConfig.with_args(num_layers="n_layer"),
+        "bloom": BloomNormalizedTextConfig,
         "falcon": NormalizedTextConfig,
         "camembert": NormalizedTextConfig,
         "codegen": GPT2LikeNormalizedTextConfig,
@@ -237,17 +263,19 @@ class NormalizedConfigManager:
         "deberta": NormalizedTextConfig,
         "deberta-v2": NormalizedTextConfig,
         "deit": NormalizedVisionConfig,
-        "distilbert": NormalizedTextConfig.with_args(num_attention_heads="n_heads", hidden_size="dim"),
+        "dinov2": NormalizedVisionConfig,
+        "distilbert": DistilBertNormalizedTextConfig,
         "donut-swin": NormalizedVisionConfig,
         "electra": NormalizedTextConfig,
         "encoder-decoder": NormalizedEncoderDecoderConfig,
         "gemma": NormalizedTextConfigWithGQA,
         "gpt2": GPT2LikeNormalizedTextConfig,
-        "gpt-bigcode": GPTBigCodeNormalizedTextConfig,
-        "gpt-neo": NormalizedTextConfig.with_args(num_attention_heads="num_heads"),
-        "gpt-neox": NormalizedTextConfig,
+        "gpt_bigcode": GPTBigCodeNormalizedTextConfig,
+        "gpt_neo": GPTNeoNormalizedTextConfig,
+        "gpt_neox": NormalizedTextConfig,
         "gptj": GPT2LikeNormalizedTextConfig,
         "imagegpt": GPT2LikeNormalizedTextConfig,
+        "internlm2": NormalizedTextConfigWithGQA,
         "llama": NormalizedTextConfigWithGQA,
         "longt5": T5LikeNormalizedTextConfig,
         "marian": BartLikeNormalizedTextConfig,
@@ -255,23 +283,25 @@ class NormalizedConfigManager:
         "mbart": BartLikeNormalizedTextConfig,
         "mistral": NormalizedTextConfigWithGQA,
         "mixtral": NormalizedTextConfigWithGQA,
+        "modernbert": NormalizedTextConfig,
         "mpnet": NormalizedTextConfig,
         "mpt": MPTNormalizedTextConfig,
         "mt5": T5LikeNormalizedTextConfig,
-        "m2m-100": BartLikeNormalizedTextConfig,
+        "m2m_100": BartLikeNormalizedTextConfig,
         "nystromformer": NormalizedTextConfig,
+        "olmo": NormalizedTextConfig,
+        "olmo2": NormalizedTextConfig,
         "opt": NormalizedTextConfig,
         "pegasus": BartLikeNormalizedTextConfig,
         "pix2struct": Pix2StructNormalizedTextConfig,
         "phi": NormalizedTextConfig,
         "phi3": NormalizedTextConfigWithGQA,
-        "phi3small": NormalizedTextConfigWithGQA,
         "poolformer": NormalizedVisionConfig,
         "regnet": NormalizedVisionConfig,
         "resnet": NormalizedVisionConfig,
         "roberta": NormalizedTextConfig,
         "segformer": NormalizedSegformerConfig,
-        "speech-to-text": SpeechToTextLikeNormalizedTextConfig,
+        "speech_to_text": SpeechToTextLikeNormalizedTextConfig,
         "splinter": NormalizedTextConfig,
         "t5": T5LikeNormalizedTextConfig,
         "trocr": TrOCRLikeNormalizedTextConfig,
@@ -281,6 +311,10 @@ class NormalizedConfigManager:
         "xlm-roberta": NormalizedTextConfig,
         "yolos": NormalizedVisionConfig,
         "qwen2": NormalizedTextConfig,
+        "qwen3": NormalizedTextConfig,
+        "qwen3_moe": NormalizedTextConfig,
+        "smollm3": NormalizedTextConfig,
+        "granite": NormalizedTextConfigWithGQA,
     }
 
     @classmethod
@@ -294,6 +328,5 @@ class NormalizedConfigManager:
 
     @classmethod
     def get_normalized_config_class(cls, model_type: str) -> Type:
-        model_type = model_type.replace("_", "-")
         cls.check_supported_model(model_type)
         return cls._conf[model_type]

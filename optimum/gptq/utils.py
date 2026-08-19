@@ -19,7 +19,7 @@ import torch
 from torch import nn
 from transformers.pytorch_utils import Conv1D
 
-from .constants import BLOCK_PATTERNS, SEQLEN_KEYS_TRANFORMERS
+from .constants import BLOCK_PATTERNS, SEQLEN_KEYS_TRANSFORMERS
 
 
 logger = getLogger(__name__)
@@ -47,7 +47,15 @@ def get_layers(module: nn.Module, layers=[Conv1D, nn.Conv2d, nn.Linear], prefix:
         `Dict[str,Union[Conv1D, nn.Conv2d, nn.Linear]]`: Mapping of the name of the layer and the actual layer
     """
     for layer in layers:
-        if isinstance(module, layer):
+        # Use exact type check for nn.Linear to skip subclasses with custom forward (e.g., MoE routers)
+        if layer is nn.Linear:
+            if type(module) is nn.Linear:
+                if prefix is not None:
+                    if name.startswith(prefix):
+                        return {name: module}
+                else:
+                    return {name: module}
+        elif isinstance(module, layer):
             if prefix is not None:
                 if name.startswith(prefix):
                     return {name: module}
@@ -72,7 +80,7 @@ def get_block_name_with_pattern(model: nn.Module):
     modules_names = [n for n, _ in model.named_modules()]
     for pattern_candidate in BLOCK_PATTERNS:
         pattern_candidate = pattern_candidate
-        if any(pattern_candidate in name for name in modules_names):
+        if any(name.startswith(pattern_candidate) for name in modules_names):
             return pattern_candidate
     raise ValueError("Block pattern could not be match. Pass `block_name_to_quantize` argument in `quantize_model`")
 
@@ -105,11 +113,26 @@ def get_device(obj: Union[torch.Tensor, nn.Module]):
 def get_seqlen(model: nn.Module):
     if hasattr(model, "config"):
         model_config = model.config.to_dict()
-        if any(k in model_config for k in SEQLEN_KEYS_TRANFORMERS):
-            for key in SEQLEN_KEYS_TRANFORMERS:
+        if any(k in model_config for k in SEQLEN_KEYS_TRANSFORMERS):
+            for key in SEQLEN_KEYS_TRANSFORMERS:
                 if key in model_config:
                     return model_config[key]
     logger.info(
         "We couldn't get the model sequence length. Setting it to 2048. You can overwrite this value by passing `model_seqlen` in` GPTQQuantizer`"
     )
     return 2048
+
+
+def move_to(obj: torch.Tensor, device: torch.device):
+    if get_device(obj) != device:
+        obj = obj.to(device)
+    return obj
+
+
+def nested_move_to(v, device):
+    if isinstance(v, torch.Tensor):
+        return move_to(v, device)
+    elif isinstance(v, (list, tuple)):
+        return type(v)([nested_move_to(e, device) for e in v])
+    else:
+        return v

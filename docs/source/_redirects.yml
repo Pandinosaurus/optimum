@@ -16,6 +16,28 @@ habana_trainer: habana/package_reference/trainer
 habana_gaudi_config: habana/package_reference/gaudi_config
 habana/usage_guides/stable_diffusion: habana/tutorials/stable_diffusion
 habana/tutorials/pretraining: habana/usage_guides/pretraining
+docs/optimum-habana/index: /docs/optimum-habana/index
+habana/index: /docs/optimum-habana/index
+habana/installation: /docs/optimum-habana/installation
+habana/quickstart: /docs/optimum-habana/quickstart
+habana/tutorials/overview: /docs/optimum-habana/tutorials/overview
+habana/tutorials/single_hpu: /docs/optimum-habana/tutorials/single_hpu
+habana/tutorials/distributed: /docs/optimum-habana/tutorials/distributed
+habana/tutorials/inference: /docs/optimum-habana/tutorials/inference
+habana/tutorials/stable_diffusion: /docs/optimum-habana/tutorials/stable_diffusion
+habana/tutorials/tgi: /docs/optimum-habana/tutorials/tgi
+habana/usage_guides/overview: /docs/optimum-habana/usage_guides/overview
+habana/usage_guides/script_adaptation: /docs/optimum-habana/usage_guides/script_adaptation
+habana/usage_guides/pretraining: /docs/optimum-habana/usage_guides/pretraining
+habana/usage_guides/accelerate_training: /docs/optimum-habana/usage_guides/accelerate_training
+habana/usage_guides/accelerate_inference: /docs/optimum-habana/usage_guides/accelerate_inference
+habana/usage_guides/deepspeed: /docs/optimum-habana/usage_guides/deepspeed
+habana/usage_guides/multi_node_training: /docs/optimum-habana/usage_guides/multi_node_training
+habana/usage_guides/quantization: /docs/optimum-habana/usage_guides/quantization
+habana/usage_guides/safe_softmax: /docs/optimum-habana/usage_guides/safe_softmax
+habana/package_reference/trainer: /docs/optimum-habana/package_reference/trainer
+habana/package_reference/gaudi_config: /docs/optimum-habana/package_reference/gaudi_config
+habana/package_reference/distributed_runner: /docs/optimum-habana/package_reference/distributed_runner
 
 # Optimum Intel
 intel_index: intel/index
@@ -31,6 +53,19 @@ intel/reference_ov: intel/openvino/reference
 intel/optimization_inc: intel/neural_compressor/optimization
 intel/distributed_training: intel/neural_compressor/distributed_training
 intel/reference_inc: intel/neural_compressor/reference
+docs/optimum-intel/index: /docs/optimum-intel/index
+intel/index: /docs/optimum-intel/index
+intel/installation: /docs/optimum-intel/installation
+intel/neural_compressor/optimization: /docs/optimum-intel/neural_compressor/optimization
+intel/neural_compressor/distributed_training: /docs/optimum-intel/neural_compressor/distributed_training
+intel/neural_compressor/reference: /docs/optimum-intel/neural_compressor/reference
+intel/openvino/export: /docs/optimum-intel/openvino/export
+intel/openvino/inference: /docs/optimum-intel/openvino/inference
+intel/openvino/optimization: /docs/optimum-intel/openvino/optimization
+intel/openvino/models: /docs/optimum-intel/openvino/models
+intel/openvino/reference: /docs/optimum-intel/openvino/reference
+intel/openvino/tutorials/notebooks: /docs/optimum-intel/openvino/tutorials/notebooks
+intel/openvino/tutorials/diffusers: /docs/optimum-intel/openvino/tutorials/diffusers
 
 # Optimum Neuron
 docs/optimum-neuron/index: /docs/optimum-neuron/index
@@ -38,3 +73,29 @@ docs/optimum-neuron/index: /docs/optimum-neuron/index
 # Optimum TPU
 docs/optimum-tpu/index: /docs/optimum-tpu/index
 tpu/index: /docs/optimum-tpu/index
+
+# Optimum ExecuTorch
+docs/optimum-executorch/index: /docs/optimum-executorch/index
+
+# Optimum ONNX
+docs/optimum-onnx/index: /docs/optimum-onnx/index
+onnxruntime/overview: /docs/optimum-onnx/onnxruntime/overview
+onnxruntime/quickstart: /docs/optimum-onnx/onnxruntime/quickstart
+onnxruntime/usage_guides/pipelines: /docs/optimum-onnx/onnxruntime/usage_guides/pipelines
+onnxruntime/usage_guides/models: /docs/optimum-onnx/onnxruntime/usage_guides/models
+onnxruntime/usage_guides/optimization: /docs/optimum-onnx/onnxruntime/usage_guides/optimization
+onnxruntime/usage_guides/quantization: /docs/optimum-onnx/onnxruntime/usage_guides/quantization
+onnxruntime/usage_guides/trainer: /docs/optimum-onnx/onnxruntime/usage_guides/trainer
+onnxruntime/usage_guides/gpu: /docs/optimum-onnx/onnxruntime/usage_guides/gpu
+onnxruntime/usage_guides/amdgpu: /docs/optimum-onnx/onnxruntime/usage_guides/amdgpu
+onnxruntime/concept_guides/onnx: /docs/optimum-onnx/onnxruntime/concept_guides/onnx
+onnxruntime/package_reference/modeling_ort: /docs/optimum-onnx/onnxruntime/package_reference/modeling_ort
+onnxruntime/package_reference/configuration: /docs/optimum-onnx/onnxruntime/package_reference/configuration
+onnxruntime/package_reference/optimization: /docs/optimum-onnx/onnxruntime/package_reference/optimization
+onnxruntime/package_reference/quantization: /docs/optimum-onnx/onnxruntime/package_reference/quantization
+onnxruntime/package_reference/trainer: /docs/optimum-onnx/onnxruntime/package_reference/trainer
+exporters/onnx/overview: /docs/optimum-onnx/onnx/overview
+exporters/onnx/usage_guides/export_a_model: /docs/optimum-onnx/onnx/usage_guides/export_a_model
+exporters/onnx/usage_guides/contribute: /docs/optimum-onnx/onnx/usage_guides/contribute
+exporters/onnx/package_reference/configuration: /docs/optimum-onnx/onnx/package_reference/configuration
+exporters/onnx/package_reference/export: /docs/optimum-onnx/onnx/package_reference/export

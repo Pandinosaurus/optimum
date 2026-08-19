@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Base class to peform task-specific preprocessing and evaluation."""
+"""Base class to perform task-specific preprocessing and evaluation."""
 
 import copy
 import functools
@@ -20,15 +20,16 @@ import itertools
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union
 
-from datasets import Dataset, DatasetDict
-from datasets import load_dataset as datasets_load_dataset
 from transformers import PreTrainedTokenizerBase
 from transformers.image_processing_utils import BaseImageProcessor
+
+from optimum.utils.import_utils import requires_backends
 
 from .. import logging
 
 
 if TYPE_CHECKING:
+    from datasets import Dataset, DatasetDict
     from transformers import PretrainedConfig
 
 
@@ -40,7 +41,7 @@ Preprocessor = Union[PreTrainedTokenizerBase, BaseImageProcessor]
 class TaskProcessor(ABC):
     ACCEPTED_PREPROCESSOR_CLASSES: Tuple[Type, ...]
     DEFAULT_DATASET_ARGS: Union[str, Dict[str, Any]]
-    DEFAUL_DATASET_DATA_KEYS: Dict[str, str]
+    DEFAULT_DATASET_DATA_KEYS: Dict[str, str]
     ALLOWED_DATA_KEY_NAMES: Set[str]
     DEFAULT_REF_KEYS: List[str]
 
@@ -102,11 +103,14 @@ class TaskProcessor(ABC):
 
     def prepare_dataset(
         self,
-        dataset: Union[DatasetDict, Dataset],
+        dataset: Union["DatasetDict", "Dataset"],
         data_keys: Dict[str, str],
         ref_keys: Optional[List[str]] = None,
         split: Optional[str] = None,
-    ) -> Union[DatasetDict, Dataset]:
+    ) -> Union["DatasetDict", "Dataset"]:
+        requires_backends(self, ["datasets"])
+        from datasets import Dataset
+
         if isinstance(dataset, Dataset) and split is not None:
             raise ValueError("A Dataset and a split name were provided, but splits are for DatasetDict.")
         elif split is not None:
@@ -130,9 +134,19 @@ class TaskProcessor(ABC):
         load_smallest_split: bool = False,
         num_samples: Optional[int] = None,
         shuffle: bool = False,
+        download_config=None,
         **load_dataset_kwargs,
-    ) -> Union[DatasetDict, Dataset]:
-        dataset = datasets_load_dataset(path, **load_dataset_kwargs)
+    ) -> Union["DatasetDict", "Dataset"]:
+        requires_backends(self, ["datasets"])
+
+        from datasets import Dataset, DatasetDict, DownloadConfig
+        from datasets import load_dataset as datasets_load_dataset
+        from transformers.utils import http_user_agent
+
+        if download_config is None:
+            download_config = DownloadConfig(user_agent=http_user_agent())
+
+        dataset = datasets_load_dataset(path, **load_dataset_kwargs, download_config=download_config)
 
         if isinstance(dataset, DatasetDict) and load_smallest_split:
             split = load_dataset_kwargs.get("split", None)
@@ -142,7 +156,7 @@ class TaskProcessor(ABC):
                 )
             smallest_split = min(dataset.items(), key=lambda item: item[1].num_rows)[0]
             logger.info(
-                "Since no split was explicitely provided and load_smallest_split=True, using the smallest split of the "
+                "Since no split was explicitly provided and load_smallest_split=True, using the smallest split of the "
                 f'dataset called "{smallest_split}".'
             )
             dataset = dataset[smallest_split]
@@ -215,7 +229,7 @@ class TaskProcessor(ABC):
             if common_keys:
                 ", ".join(common_keys)
                 logger.warning(
-                    "The following provided arguments will be overriden because they are hardcoded when using "
+                    "The following provided arguments will be overridden because they are hardcoded when using "
                     "load_default_dataset: {override_config_key}."
                 )
             kwargs = copy.deepcopy(load_dataset_kwargs)
@@ -226,7 +240,7 @@ class TaskProcessor(ABC):
 
         return self.load_dataset(
             path,
-            data_keys=self.DEFAUL_DATASET_DATA_KEYS,
+            data_keys=self.DEFAULT_DATASET_DATA_KEYS,
             ref_keys=self.DEFAULT_REF_KEYS,
             only_keep_necessary_columns=only_keep_necessary_columns,
             load_smallest_split=load_smallest_split,

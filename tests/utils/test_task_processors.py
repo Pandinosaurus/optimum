@@ -16,25 +16,34 @@
 import copy
 import random
 import string
-from typing import TYPE_CHECKING, Any, Dict, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 from unittest import TestCase
 
-from datasets import DatasetDict
-from transformers import AutoConfig, AutoFeatureExtractor, AutoTokenizer
+import pytest
+from transformers import (
+    AutoConfig,
+    AutoProcessor,
+    AutoTokenizer,
+    PretrainedConfig,
+    PreTrainedTokenizerBase,
+)
+from transformers.image_processing_utils import BaseImageProcessor
+from transformers.utils import http_user_agent
 
+from optimum.utils.import_utils import is_datasets_available
 from optimum.utils.preprocessing import TaskProcessorsManager
+from optimum.utils.testing_utils import require_datasets
 
 
-if TYPE_CHECKING:
-    from transformers import PretrainedConfig, PreTrainedTokenizerBase
-    from transformers.image_processing_utils import BaseImageProcessor
+if is_datasets_available():
+    from datasets import DatasetDict, DownloadConfig
 
 
 TEXT_MODEL_NAME = "bert-base-uncased"
 CONFIG = AutoConfig.from_pretrained(TEXT_MODEL_NAME)
 TOKENIZER = AutoTokenizer.from_pretrained(TEXT_MODEL_NAME)
 IMAGE_MODEL_NAME = "google/vit-base-patch16-224"
-IMAGE_PROCESSOR = AutoFeatureExtractor.from_pretrained(IMAGE_MODEL_NAME)
+IMAGE_PROCESSOR = AutoProcessor.from_pretrained(IMAGE_MODEL_NAME)
 
 TASK_TO_NON_DEFAULT_DATASET = {
     "text-classification": {
@@ -90,6 +99,7 @@ class TaskProcessorTestBase:
         else:
             path = not_default_dataset_args
             load_dataset_kwargs = {}
+
         return path, load_dataset_kwargs
 
     def test_accepted_preprocessor_classes_do_not_raise_exception(self):
@@ -122,6 +132,8 @@ class TaskProcessorTestBase:
         )
         self.assertDictEqual(preprocessor_kwargs, clone)
 
+    @require_datasets
+    @pytest.mark.datasets_test
     def test_load_dataset_unallowed_data_keys(self):
         task_processor = TaskProcessorsManager.get_task_processor_class_for_task(self.TASK_NAME)(
             self.CONFIG, self.PREPROCESSOR
@@ -143,6 +155,7 @@ class TaskProcessorTestBase:
         only_keep_necessary_columns: bool,
         **preprocessor_kwargs,
     ):
+        download_config = DownloadConfig(user_agent=http_user_agent())
         task_processor = TaskProcessorsManager.get_task_processor_class_for_task(self.TASK_NAME)(
             self.CONFIG, self.PREPROCESSOR, preprocessor_kwargs
         )
@@ -155,9 +168,10 @@ class TaskProcessorTestBase:
                 only_keep_necessary_columns=only_keep_necessary_columns,
                 load_smallest_split=LOAD_SMALLEST_SPLIT,
                 num_samples=NUM_SAMPLES,
+                download_config=download_config,
             )
             if only_keep_necessary_columns:
-                dataset_with_all_columns = task_processor.load_default_dataset()
+                dataset_with_all_columns = task_processor.load_default_dataset(download_config=download_config)
         else:
             path, load_dataset_kwargs = self.get_dataset_path_and_kwargs()
             dataset = task_processor.load_dataset(
@@ -167,6 +181,7 @@ class TaskProcessorTestBase:
                 load_smallest_split=LOAD_SMALLEST_SPLIT,
                 num_samples=NUM_SAMPLES,
                 **load_dataset_kwargs,
+                download_config=download_config,
             )
             if only_keep_necessary_columns:
                 dataset_with_all_columns = task_processor.load_dataset(
@@ -175,6 +190,7 @@ class TaskProcessorTestBase:
                     load_smallest_split=LOAD_SMALLEST_SPLIT,
                     num_samples=NUM_SAMPLES,
                     **load_dataset_kwargs,
+                    download_config=download_config,
                 )
 
         # We only check if the column names of the dataset with the not necessary columns removed are a strict subset
@@ -188,15 +204,23 @@ class TaskProcessorTestBase:
 
         return dataset
 
+    @require_datasets
+    @pytest.mark.datasets_test
     def test_load_dataset(self):
         return self._test_load_dataset(False, False, False)
 
+    @require_datasets
+    @pytest.mark.datasets_test
     def test_load_dataset_by_guessing_data_keys(self):
         return self._test_load_dataset(False, True, False)
 
+    @require_datasets
+    @pytest.mark.datasets_test
     def test_load_dataset_and_only_keep_necessary_columns(self):
         return self._test_load_dataset(False, False, True)
 
+    @require_datasets
+    @pytest.mark.datasets_test
     def test_load_default_dataset(self):
         return self._test_load_dataset(True, False, False)
 
@@ -207,6 +231,8 @@ class TextClassificationProcessorTest(TestCase, TaskProcessorTestBase):
     PREPROCESSOR = TOKENIZER
     WRONG_PREPROCESSOR = IMAGE_PROCESSOR
 
+    @require_datasets
+    @pytest.mark.datasets_test
     def test_load_dataset_with_max_length(self):
         max_length = random.randint(4, 16)
         dataset = self._test_load_dataset(False, False, True, max_length=max_length)
@@ -223,6 +249,8 @@ class TokenClassificationProcessorTest(TestCase, TaskProcessorTestBase):
     PREPROCESSOR = TOKENIZER
     WRONG_PREPROCESSOR = IMAGE_PROCESSOR
 
+    @require_datasets
+    @pytest.mark.datasets_test
     def test_load_dataset_with_max_length(self):
         max_length = random.randint(4, 16)
         dataset = self._test_load_dataset(False, False, True, max_length=max_length)
@@ -232,6 +260,8 @@ class TokenClassificationProcessorTest(TestCase, TaskProcessorTestBase):
         input_ids = dataset[0]["input_ids"]
         self.assertEqual(len(input_ids), max_length)
 
+    @require_datasets
+    @pytest.mark.datasets_test
     def test_load_default_dataset(self):
         self.skipTest(
             "Skipping so as not to execute conll2003 remote code (test would require trust_remote_code=True)"
@@ -244,6 +274,8 @@ class QuestionAnsweringProcessorTest(TestCase, TaskProcessorTestBase):
     PREPROCESSOR = TOKENIZER
     WRONG_PREPROCESSOR = IMAGE_PROCESSOR
 
+    @require_datasets
+    @pytest.mark.datasets_test
     def test_load_dataset_with_max_length(self):
         max_length = 384
         dataset = self._test_load_dataset(False, False, True, max_length=max_length)

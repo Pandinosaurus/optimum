@@ -1,10 +1,8 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-name: Optimum CLI / Python - Test
+name: Optimum CLI / Python - Test - Subpackage (ONNX)
 
 on:
   push:
-    branches: [main]
+    branches: [main, v*-release]
   pull_request:
     branches: [main]
 
@@ -12,30 +10,60 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  UV_SYSTEM_PYTHON: 1
+  UV_TORCH_BACKEND: cpu
+  OPTIMUM_ONNX_REF: main
+  TRANSFORMERS_IS_CI: true
+
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.8, 3.9]
-        os: [ubuntu-20.04, macos-13]
+        python-version: ["3.10"]
+        runs-on: [ubuntu-22.04, windows-2022]
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runs-on }}
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout optimum
+        uses: actions/checkout@v7
+        with:
+          path: optimum
+          fetch-depth: 0
+
+      - name: checkout optimum-onnx
+        uses: actions/checkout@v7
+        with:
+          repository: huggingface/optimum-onnx
+          ref: ${{ env.OPTIMUM_ONNX_REF }}
+          path: optimum-onnx
+          fetch-depth: 0
 
       - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-          pip install .[tests,exporters,exporters-tf]
+          python -m pip install --upgrade pip uv
+          uv pip install ./optimum-onnx[onnxruntime]
+          uv pip install ./optimum[tests] --prerelease=allow
 
       - name: Test with pytest
         run: |
-          pytest tests/cli -s -vvvv --durations=0
+          pytest tests/cli -vvvv --durations=0
+        working-directory: optimum
+
+      - name: Install dependencies (editable mode)
+        run: |
+          uv pip uninstall optimum-onnx optimum
+          uv pip install -e ./optimum-onnx[onnxruntime]
+          uv pip install -e ./optimum[tests] --prerelease=allow
+
+      - name: Test with pytest (editable mode)
+        run: |
+          pytest tests/cli -vvvv --durations=0
+        working-directory: optimum

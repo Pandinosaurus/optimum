@@ -12,12 +12,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-SEQLEN_KEYS_TRANFORMERS = ["max_position_embeddings", "seq_length", "n_positions"]
+SEQLEN_KEYS_TRANSFORMERS = ["max_position_embeddings", "seq_length", "n_positions"]
 BLOCK_PATTERNS = [
     "transformer.h",
     "model.decoder.layers",
     "gpt_neox.layers",
     "model.layers",
+    "model.language_model.layers",
+    # modules loaded by AutoModel vs AutoModelForCausalLM have different prefixes
+    "h",
+    "decoder.layers",
+    "layers",
 ]
 
 GPTQ_CONFIG = "quantize_config.json"

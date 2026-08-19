@@ -21,8 +21,8 @@ import pytest
 from transformers import BertConfig, Pix2StructForConditionalGeneration, VisualBertForQuestionAnswering
 from transformers.testing_utils import slow
 
-from optimum.exporters import TasksManager
 from optimum.exporters.onnx.model_configs import BertOnnxConfig
+from optimum.exporters.tasks import TasksManager
 
 
 class TasksManagerTestCase(TestCase):
@@ -74,9 +74,6 @@ class TasksManagerTestCase(TestCase):
 
     def test_all_onnx_models_are_registered(self):
         return self._check_all_models_are_registered("onnx", "OnnxConfig")
-
-    def test_all_tflite_models_are_registered(self):
-        return self._check_all_models_are_registered("tflite", "TFLiteConfig")
 
     def test_register(self):
         # Case 1: We try to register a config that was already registered, it should not register anything.
@@ -187,3 +184,28 @@ class TasksManagerTestCase(TestCase):
         )
         self.assertEqual(TasksManager.infer_library_from_model("gpt2"), "transformers")
         self.assertEqual(TasksManager.infer_library_from_model("timm/mobilenetv3_large_100.ra_in1k"), "timm")
+
+    def test_standardize_sentence_transformers_readonly_config(self):
+        # sentence-transformers >= 5 makes `config` read-only, so the assignment must not raise.
+        class Transformer:
+            def __init__(self, config):
+                self.auto_model = type("AutoModel", (), {"config": config})()
+
+        class SentenceTransformer:
+            def __init__(self, inner):
+                self._modules = [inner]
+
+            def __getitem__(self, idx):
+                return self._modules[idx]
+
+            @property
+            def config(self):
+                return self._modules[0].auto_model.config
+
+        inner_config = BertConfig()
+        st_model = SentenceTransformer(Transformer(inner_config))
+
+        TasksManager.standardize_model_attributes(st_model, library_name="sentence_transformers")
+
+        self.assertEqual(inner_config.export_model_type, "transformer")
+        self.assertIs(st_model.config, inner_config)

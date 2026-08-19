@@ -13,33 +13,29 @@ except Exception as error:
 
 
 REQUIRED_PKGS = [
-    "coloredlogs",
-    "sympy",
-    "transformers[sentencepiece]>=4.29.0,<4.44.0",
+    "transformers>=4.29",
     "torch>=1.11",
     "packaging",
-    "numpy<2.0",  # transformers requires numpy<2.0 https://github.com/huggingface/transformers/pull/31569
+    "numpy",
     "huggingface_hub>=0.8.0",
-    "datasets",
 ]
 
-# TODO: unpin pytest once https://github.com/huggingface/transformers/pull/29154 is merged & released
 TESTS_REQUIRE = [
+    "pytest",
     "accelerate",
-    "pytest<=8.0.0",
     "requests",
     "parameterized",
     "pytest-xdist",
     "Pillow",
     "sacremoses",
     "torchvision",
-    "diffusers>=0.17.0",
     "torchaudio",
     "einops",
-    "invisible-watermark",
     "timm",
     "scikit-learn",
+    "sentencepiece",
     "rjieba",
+    "hf_xet",
 ]
 
 QUALITY_REQUIRE = ["black~=23.1", "ruff==0.1.5"]
@@ -47,45 +43,19 @@ QUALITY_REQUIRE = ["black~=23.1", "ruff==0.1.5"]
 BENCHMARK_REQUIRE = ["optuna", "tqdm", "scikit-learn", "seqeval", "torchvision", "evaluate>=0.2.0"]
 
 EXTRAS_REQUIRE = {
-    "onnxruntime": [
-        "onnx",
-        "onnxruntime>=1.11.0",
-        "datasets>=1.2.1",
-        "evaluate",
-        "protobuf>=3.20.1",
-    ],
-    "onnxruntime-gpu": [
-        "onnx",
-        "onnxruntime-gpu>=1.11.0",
-        "datasets>=1.2.1",
-        "evaluate",
-        "protobuf>=3.20.1",
-        "accelerate",  # ORTTrainer requires it.
-    ],
-    "exporters": ["onnx", "onnxruntime", "timm"],
-    "exporters-gpu": ["onnx", "onnxruntime-gpu", "timm"],
-    "exporters-tf": [
-        "tensorflow>=2.4,<=2.12.1",
-        "tf2onnx",
-        "onnx",
-        "onnxruntime",
-        "timm",
-        "h5py",
-        "numpy<1.24.0",
-        "transformers[sentencepiece]>=4.26.0,<4.38.0",
-    ],
-    "diffusers": ["diffusers"],
-    "intel": "optimum-intel>=1.18.0",
-    "openvino": "optimum-intel[openvino]>=1.18.0",
-    "nncf": "optimum-intel[nncf]>=1.18.0",
-    "neural-compressor": "optimum-intel[neural-compressor]>=1.18.0",
-    "ipex": "optimum-intel[ipex]>=1.18.0",
-    "habana": ["optimum-habana", "transformers >= 4.40.0, < 4.41.0"],
-    "neuron": ["optimum-neuron[neuron]>=0.0.20", "transformers >= 4.36.2, < 4.42.0"],
-    "neuronx": ["optimum-neuron[neuronx]>=0.0.20", "transformers >= 4.36.2, < 4.42.0"],
-    "graphcore": "optimum-graphcore",
-    "furiosa": "optimum-furiosa",
     "amd": "optimum-amd",
+    "furiosa": "optimum-furiosa",
+    "graphcore": "optimum-graphcore",
+    "habana": "optimum-habana>=1.17.0",
+    "intel": "optimum-intel>=1.23.0",
+    "nncf": "optimum-intel[nncf]>=1.23.0",
+    "neural-compressor": "optimum-intel[neural-compressor]>=1.23.0",
+    "onnx": "optimum-onnx",
+    "onnxruntime": "optimum-onnx[onnxruntime]",
+    "onnxruntime-gpu": "optimum-onnx[onnxruntime-gpu]",
+    "openvino": "optimum-intel[openvino]>=1.23.0",
+    "quanto": "optimum-quanto>=0.2.4",
+    ###########################################################################
     "dev": TESTS_REQUIRE + QUALITY_REQUIRE,
     "tests": TESTS_REQUIRE,
     "quality": QUALITY_REQUIRE,
@@ -108,9 +78,10 @@ setup(
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     keywords="transformers, quantization, pruning, optimization, training, inference, onnx, onnx runtime, intel, "
@@ -122,7 +93,7 @@ setup(
     packages=find_namespace_packages(include=["optimum*"]),
     install_requires=REQUIRED_PKGS,
     extras_require=EXTRAS_REQUIRE,
-    python_requires=">=3.7.0",
+    python_requires=">=3.9.0",
     include_package_data=True,
     zip_safe=False,
     entry_points={"console_scripts": ["optimum-cli=optimum.commands.optimum_cli:main"]},

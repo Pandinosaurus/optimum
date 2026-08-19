@@ -23,12 +23,11 @@ import unittest
 from collections.abc import MutableMapping
 from typing import Any, Callable, Dict, Iterable, Optional, Tuple
 
-import torch
-
 from . import (
     is_accelerate_available,
-    is_auto_gptq_available,
+    is_datasets_available,
     is_diffusers_available,
+    is_gptqmodel_available,
     is_sentence_transformers_available,
     is_timm_available,
 )
@@ -59,15 +58,17 @@ def require_accelerate(test_case):
     return unittest.skipUnless(is_accelerate_available(), "test requires accelerate")(test_case)
 
 
-def require_auto_gptq(test_case):
+def require_gptqmodel(test_case):
     """
-    Decorator marking a test that requires auto-gptq. These tests are skipped when auto-gptq isn't installed.
+    Decorator marking a test that requires GPT-QModel. These tests are skipped when `gptqmodel` isn't installed.
     """
-    return unittest.skipUnless(is_auto_gptq_available(), "test requires auto-gptq")(test_case)
+    return unittest.skipUnless(is_gptqmodel_available(), "test requires GPT-QModel")(test_case)
 
 
 def require_torch_gpu(test_case):
     """Decorator marking a test that requires CUDA and PyTorch."""
+    import torch
+
     torch_device = "cuda" if torch.cuda.is_available() else "cpu"
 
     return unittest.skipUnless(torch_device == "cuda", "test requires CUDA")(test_case)
@@ -88,7 +89,7 @@ def require_hf_token(test_case):
     """
     Decorator marking a test that requires huggingface hub token.
     """
-    # is HF_AUTH_TOKEN used instead of HF_TOKEN to avoid huggigface_hub picking it up ?
+    # is HF_AUTH_TOKEN used instead of HF_TOKEN to avoid huggingface_hub picking it up ?
     hf_token = os.environ.get("HF_AUTH_TOKEN", None)
     if hf_token is None:
         return unittest.skip("test requires hf token as `HF_AUTH_TOKEN` environment variable")(test_case)
@@ -144,6 +145,10 @@ def require_timm(test_case):
 
 def require_sentence_transformers(test_case):
     return unittest.skipUnless(is_sentence_transformers_available(), "test requires sentence-transformers")(test_case)
+
+
+def require_datasets(test_case):
+    return unittest.skipUnless(is_datasets_available(), "test requires datasets")(test_case)
 
 
 def grid_parameters(

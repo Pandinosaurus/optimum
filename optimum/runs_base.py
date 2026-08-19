@@ -2,13 +2,12 @@ import os
 import subprocess
 from contextlib import contextmanager
 from time import perf_counter_ns
-from typing import Set
+from typing import TYPE_CHECKING, Set
 
 import numpy as np
 import optuna
 import torch
 import transformers
-from datasets import Dataset
 from tqdm import trange
 
 from . import version as optimum_version
@@ -20,6 +19,9 @@ from .utils.preprocessing import (
 )
 from .utils.runs import RunConfig, cpu_info_command
 
+
+if TYPE_CHECKING:
+    from datasets import Dataset
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -34,7 +36,7 @@ def get_autoclass_name(task):
 
 class Calibrator:
     def __init__(
-        self, calibration_dataset: Dataset, quantizer, model_path, qconfig, calibration_params, node_exclusion
+        self, calibration_dataset: "Dataset", quantizer, model_path, qconfig, calibration_params, node_exclusion
     ):
         self.calibration_dataset = calibration_dataset
         self.quantizer = quantizer
@@ -265,7 +267,7 @@ class TimeBenchmark:
             benchmark_duration_ns = self.benchmark_duration * SEC_TO_NS_SCALE
             print(f"Running time tracking in {self.benchmark_duration:.1f}s.")
             while sum(self.latencies) < benchmark_duration_ns:
-                # TODO not trak GPU/CPU <--> numpy/torch, need to change the implementation of forward
+                # TODO not track GPU/CPU <--> numpy/torch, need to change the implementation of forward
                 with self.track():
                     self.model.forward(**inputs)
 

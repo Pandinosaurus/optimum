@@ -129,42 +129,6 @@ To train transformers on Habana's Gaudi processors, 🤗 Optimum provides a `Gau
 
 You can find more examples in the [documentation](https://huggingface.co/docs/optimum/habana/quickstart) and in the [examples](https://github.com/huggingface/optimum-habana/tree/main/examples).
 
-
-#### ONNX Runtime
-
-To train transformers with ONNX Runtime's acceleration features, 🤗 Optimum provides a `ORTTrainer` that is very similar to the 🤗 Transformers [Trainer](https://huggingface.co/docs/transformers/main_classes/trainer). Here is a simple example:
-
-```diff
-- from transformers import Trainer, TrainingArguments
-+ from optimum.onnxruntime import ORTTrainer, ORTTrainingArguments
-
-  # Download a pretrained model from the Hub
-  model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased")
-
-  # Define the training arguments
-- training_args = TrainingArguments(
-+ training_args = ORTTrainingArguments(
-      output_dir="path/to/save/folder/",
-      optim="adamw_ort_fused",
-      ...
-  )
-
-  # Create a ONNX Runtime Trainer
-- trainer = Trainer(
-+ trainer = ORTTrainer(
-      model=model,
-      args=training_args,
-      train_dataset=train_dataset,
-+     feature="text-classification", # The model type to export to ONNX
-      ...
-  )
-
-  # Use ONNX Runtime for training!
-  trainer.train()
-```
-
-You can find more examples in the [documentation](https://huggingface.co/docs/optimum/onnxruntime/usage_guides/trainer) and in the [examples](https://github.com/huggingface/optimum/tree/main/examples/onnxruntime/training).
-
 ## Out of the box ONNX export
 
 The Optimum library handles out of the box the ONNX export of Transformers and Diffusers models!
@@ -182,20 +146,6 @@ optimum-cli export onnx --help
 ```
 
 Check out the [documentation](https://huggingface.co/docs/optimum/exporters/onnx/usage_guides/export_a_model) for more.
-
-## PyTorch's BetterTransformer support
-
-[BetterTransformer](https://pytorch.org/blog/a-better-transformer-for-fast-transformer-encoder-inference/) is a free-lunch PyTorch-native optimization to gain x1.25 - x4 speedup on the inference of Transformer-based models. It has been marked as stable in [PyTorch 1.13](https://pytorch.org/blog/PyTorch-1.13-release/). We integrated BetterTransformer with the most-used models from the 🤗 Transformers libary, and using the integration is as simple as:
-
-```python
->>> from optimum.bettertransformer import BetterTransformer
->>> from transformers import AutoModelForSequenceClassification
-
->>> model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
->>> model = BetterTransformer.transform(model)
-```
-
-Check out the [documentation](https://huggingface.co/docs/optimum/bettertransformer/overview) for more details, and the [blog post on PyTorch's Medium](https://medium.com/pytorch/bettertransformer-out-of-the-box-performance-for-huggingface-transformers-3fbe27d50ab2) to find out more about the integration!
 
 ## `torch.fx` integration
 
